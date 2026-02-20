@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAll, createAnecdote, voteAnecdote, deleteAnecdote } from './services/anecdotes'
 import { useReducer } from 'react'
 import UsersView from './UsersView'
+import UserDetailView from './UserDetailView'
 
 // Reducer para o estado do user
 const userReducer = (state, action) => {
@@ -209,6 +210,7 @@ const App = () => {
           />
           <Route path="/login" element={<Login login={login} />} />
           <Route path="/users" element={<UsersView anecdotes={anecdotes} />} />
+          <Route path="/users/:username" element={<UserDetailView anecdotes={anecdotes} />} />
         </Routes>
         <Footer />
       </div>

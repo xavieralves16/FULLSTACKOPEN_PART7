@@ -15,6 +15,7 @@ let anecdotes = [
   }
 ]
 
+// Anecdotes API
 export const getAll = async () => [...anecdotes]
 
 export const createAnecdote = async (newAnecdote) => {
@@ -33,4 +34,24 @@ export const voteAnecdote = async (id) => {
 export const deleteAnecdote = async (id) => {
   anecdotes = anecdotes.filter(a => a.id !== id)
   return id
+}
+
+// Users API
+export const getUsers = async () => {
+  const usersMap = {}
+  anecdotes.forEach(a => {
+    if (!usersMap[a.author]) usersMap[a.author] = []
+    usersMap[a.author].push(a)
+  })
+
+  return Object.entries(usersMap).map(([name, blogs], index) => ({
+    id: index + 1,
+    name,
+    blogs
+  }))
+}
+
+export const getUserById = async (id) => {
+  const users = await getUsers()
+  return users.find(u => u.id === Number(id))
 }

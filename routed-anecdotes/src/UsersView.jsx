@@ -1,36 +1,30 @@
-import React from 'react'
+import { Link, useParams } from 'react-router-dom'
 
 const UsersView = ({ anecdotes }) => {
-  const users = anecdotes.reduce((acc, anecdote) => {
-    const username = anecdote.user || 'unknown'
-    if (!acc[username]) acc[username] = []
-    acc[username].push(anecdote)
+  const users = anecdotes.reduce((acc, a) => {
+    if (!a.user) return acc
+    if (!acc[a.user]) acc[a.user] = 0
+    acc[a.user] += 1
     return acc
   }, {})
-
-  const usernames = Object.keys(users)
 
   return (
     <div>
       <h2>Users</h2>
-      <table>
+      <table border="1">
         <thead>
           <tr>
             <th>User</th>
-            <th>Blogs created</th>
+            <th>Created anecdotes</th>
           </tr>
         </thead>
         <tbody>
-          {usernames.map(username => (
+          {Object.entries(users).map(([username, count]) => (
             <tr key={username}>
-              <td>{username}</td>
               <td>
-                <ul>
-                  {users[username].map(blog => (
-                    <li key={blog.id}>{blog.content}</li>
-                  ))}
-                </ul>
+                <Link to={`/users/${username}`}>{username}</Link>
               </td>
+              <td>{count}</td>
             </tr>
           ))}
         </tbody>
@@ -40,3 +34,4 @@ const UsersView = ({ anecdotes }) => {
 }
 
 export default UsersView
+
