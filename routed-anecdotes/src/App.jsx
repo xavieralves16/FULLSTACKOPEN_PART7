@@ -7,6 +7,7 @@ import { useReducer } from 'react'
 import UsersView from './UsersView'
 import UserDetailView from './UserDetailView'
 import React from 'react'
+import './App.css'
 
 
 // Reducer para o estado do user
