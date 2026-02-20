@@ -8,6 +8,7 @@ import {
   useNavigate
 } from 'react-router-dom'
 import { useField } from './hooks'
+import { useNotification } from './NotificationContext'
 
 
 const Menu = () => {
@@ -147,6 +148,9 @@ const CreateNew = ({ addNew }) => {
 
 
 const App = () => {
+
+  const [notification, dispatch] = useNotification()
+
   const [anecdotes, setAnecdotes] = useState([
     {
       content: 'If it hurts, do it more often',
@@ -164,16 +168,19 @@ const App = () => {
     }
   ])
 
-  const [notification, setNotification] = useState('')
+
 
   const addNew = (anecdote) => {
     anecdote.id = Math.round(Math.random() * 10000)
     setAnecdotes(anecdotes.concat(anecdote))
 
-    setNotification(`A new anecdote "${anecdote.content}" created!`)
+    dispatch({
+      type: 'SET',
+      payload: `A new anecdote "${anecdote.content}" created!`
+    })
 
     setTimeout(() => {
-      setNotification('')
+      dispatch({ type: 'CLEAR' })
     }, 5000)
   }
 
