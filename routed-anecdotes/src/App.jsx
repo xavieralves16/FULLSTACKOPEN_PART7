@@ -4,6 +4,7 @@ import { useNotification } from './NotificationContext'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAll, createAnecdote, voteAnecdote, deleteAnecdote } from './services/anecdotes'
 import { useReducer } from 'react'
+import UsersView from './UsersView'
 
 // Reducer para o estado do user
 const userReducer = (state, action) => {
@@ -22,6 +23,7 @@ const Menu = ({ user, logout }) => (
     <Link to="/" style={{ paddingRight: 5 }}>anecdotes</Link>
     <Link to="/create" style={{ paddingRight: 5 }}>create new</Link>
     <Link to="/about" style={{ paddingRight: 5 }}>about</Link>
+    <Link to="/users" style={{ paddingRight: 5 }}>users</Link>
     {user ? (
       <span>
         Logged in as {user.username} <button onClick={logout}>logout</button>
@@ -206,6 +208,7 @@ const App = () => {
             }
           />
           <Route path="/login" element={<Login login={login} />} />
+          <Route path="/users" element={<UsersView anecdotes={anecdotes} />} />
         </Routes>
         <Footer />
       </div>
