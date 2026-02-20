@@ -3,7 +3,6 @@ import { useField } from './hooks/useField'
 import { useResource } from './hooks/useResource'
 
 const App = () => {
-  
   const content = useField('text')
   const name = useField('text')
   const number = useField('text')
@@ -31,7 +30,9 @@ const App = () => {
         <input {...content} />
         <button>create</button>
       </form>
-      {notes.map(n => <p key={n.id}>{n.content}</p>)}
+      {notes.map((n) => (
+        <p key={n.id}>{n.content}</p>
+      ))}
 
       <h2>persons</h2>
       <form onSubmit={handlePersonSubmit}>
@@ -39,7 +40,11 @@ const App = () => {
         number <input {...number} />
         <button>create</button>
       </form>
-      {persons.map(p => <p key={p.id}>{p.name} {p.number}</p>)}
+      {persons.map((p) => (
+        <p key={p.id}>
+          {p.name} {p.number}
+        </p>
+      ))}
     </div>
   )
 }
