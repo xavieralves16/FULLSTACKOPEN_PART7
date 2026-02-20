@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } 
 import { useField } from './hooks'
 import { useNotification } from './NotificationContext'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getAll, createAnecdote } from './services/anecdotes'
+import { getAll, createAnecdote, voteAnecdote, deleteAnecdote } from './services/anecdotes'
 
 const Menu = () => (
   <div>
@@ -25,10 +25,22 @@ const AnecdoteList = ({ anecdotes }) => (
   </div>
 )
 
-const Anecdote = ({ anecdotes }) => {
+const Anecdote = ({ anecdotes, voteMutation, deleteMutation, dispatch }) => {
   const { id } = useParams()
   const anecdote = anecdotes.find(a => a.id === Number(id))
   if (!anecdote) return <div>Anecdote not found</div>
+
+  const handleVote = () => {
+    voteMutation.mutate(anecdote.id)  
+    dispatch({ type: 'SET', payload: `You liked "${anecdote.content}"` })
+    setTimeout(() => dispatch({ type: 'CLEAR' }), 5000)
+  }
+
+  const handleDelete = () => {
+    deleteMutation.mutate(anecdote.id)
+    dispatch({ type: 'SET', payload: `"${anecdote.content}" deleted` })
+    setTimeout(() => dispatch({ type: 'CLEAR' }), 5000)
+  }
 
   return (
     <div>
@@ -36,6 +48,8 @@ const Anecdote = ({ anecdotes }) => {
       <div>Author: {anecdote.author}</div>
       <div>Votes: {anecdote.votes}</div>
       <div>More info: <a href={anecdote.info}>{anecdote.info}</a></div>
+      <button onClick={handleVote}>like</button>
+      <button onClick={handleDelete}>delete</button>
     </div>
   )
 }
@@ -102,6 +116,7 @@ const App = () => {
     queryFn: getAll
   })
 
+  // Mutations
   const newAnecdoteMutation = useMutation({
     mutationFn: createAnecdote,
     onSuccess: (newAnecdote) => {
@@ -109,6 +124,16 @@ const App = () => {
       dispatch({ type: 'SET', payload: `A new anecdote "${newAnecdote.content}" created!` })
       setTimeout(() => dispatch({ type: 'CLEAR' }), 5000)
     }
+  })
+
+  const voteMutation = useMutation({
+    mutationFn: voteAnecdote,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['anecdotes'] })
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteAnecdote,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['anecdotes'] })
   })
 
   const addNew = (anecdote) => newAnecdoteMutation.mutate(anecdote)
@@ -124,8 +149,18 @@ const App = () => {
         <Routes>
           <Route path="/" element={<AnecdoteList anecdotes={anecdotes} />} />
           <Route path="/create" element={<CreateNew addNew={addNew} />} />
+          <Route
+            path="/anecdotes/:id"
+            element={
+              <Anecdote
+                anecdotes={anecdotes}
+                voteMutation={voteMutation}
+                deleteMutation={deleteMutation}
+                dispatch={dispatch}
+              />
+            }
+          />
           <Route path="/about" element={<About />} />
-          <Route path="/anecdotes/:id" element={<Anecdote anecdotes={anecdotes} />} />
         </Routes>
         <Footer />
       </div>

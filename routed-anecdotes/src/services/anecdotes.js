@@ -15,12 +15,22 @@ let anecdotes = [
   }
 ]
 
-export const getAll = async () => {
-  return [...anecdotes]
-}
+export const getAll = async () => [...anecdotes]
 
 export const createAnecdote = async (newAnecdote) => {
   const anecdote = { ...newAnecdote, id: Math.round(Math.random() * 10000) }
   anecdotes.push(anecdote)
   return anecdote
+}
+
+export const voteAnecdote = async (id) => {
+  const anecdote = anecdotes.find(a => a.id === id)
+  if (!anecdote) throw new Error('Anecdote not found')
+  anecdote.votes += 1
+  return anecdote
+}
+
+export const deleteAnecdote = async (id) => {
+  anecdotes = anecdotes.filter(a => a.id !== id)
+  return id
 }
