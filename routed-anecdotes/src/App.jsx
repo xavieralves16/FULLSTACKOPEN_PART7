@@ -20,33 +20,52 @@ const userReducer = (state, action) => {
 }
 
 const Menu = ({ user, logout }) => (
-  <div>
-    <Link to="/" style={{ paddingRight: 5 }}>anecdotes</Link>
-    <Link to="/create" style={{ paddingRight: 5 }}>create new</Link>
-    <Link to="/about" style={{ paddingRight: 5 }}>about</Link>
-    <Link to="/users" style={{ paddingRight: 5 }}>users</Link>
-    {user ? (
-      <span>
-        Logged in as {user.username} <button onClick={logout}>logout</button>
-      </span>
-    ) : (
-      <Link to="/login">login</Link>
-    )}
+  <div style={{ paddingBottom: 10, borderBottom: '1px solid black', marginBottom: 20 }}>
+    <Link to="/" style={{ paddingRight: 10 }}>Anecdotes</Link>
+    <Link to="/create" style={{ paddingRight: 10 }}>Create New</Link>
+    <Link to="/about" style={{ paddingRight: 10 }}>About</Link>
+    <Link to="/users" style={{ paddingRight: 10 }}>Users</Link>
+
+    <span style={{ float: 'right' }}>
+      {user ? (
+        <>
+          Logged in as <strong>{user.username}</strong> <button onClick={logout}>Logout</button>
+        </>
+      ) : (
+        <Link to="/login">Login</Link>
+      )}
+    </span>
   </div>
 )
+
 
 const AnecdoteList = ({ anecdotes }) => (
   <div>
     <h2>Anecdotes</h2>
-    <ul>
-      {anecdotes.map(a => (
-        <li key={a.id}>
-          <Link to={`/anecdotes/${a.id}`}>{a.content}</Link>
-        </li>
-      ))}
-    </ul>
+    <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+      <thead>
+        <tr>
+          <th style={{ border: '1px solid black', padding: '5px' }}>Content</th>
+          <th style={{ border: '1px solid black', padding: '5px' }}>Author</th>
+          <th style={{ border: '1px solid black', padding: '5px' }}>Votes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {anecdotes.map(a => (
+          <tr key={a.id}>
+            <td style={{ border: '1px solid black', padding: '5px' }}>
+              <Link to={`/anecdotes/${a.id}`}>{a.content}</Link>
+            </td>
+            <td style={{ border: '1px solid black', padding: '5px' }}>{a.author}</td>
+            <td style={{ border: '1px solid black', padding: '5px' }}>{a.votes}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   </div>
 )
+
+
 
 const Anecdote = ({ anecdotes, voteMutation, deleteMutation, dispatch, user }) => {
   const { id } = useParams()
