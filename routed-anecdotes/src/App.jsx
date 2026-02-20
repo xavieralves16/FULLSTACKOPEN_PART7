@@ -2,10 +2,12 @@ import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } 
 import { useField } from './hooks'
 import { useNotification } from './NotificationContext'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getAll, createAnecdote, voteAnecdote, deleteAnecdote } from './services/anecdotes'
+import { getAll, createAnecdote, voteAnecdote, deleteAnecdote , addComment} from './services/anecdotes'
 import { useReducer } from 'react'
 import UsersView from './UsersView'
 import UserDetailView from './UserDetailView'
+import React from 'react'
+
 
 // Reducer para o estado do user
 const userReducer = (state, action) => {
@@ -67,10 +69,17 @@ const AnecdoteList = ({ anecdotes }) => (
 
 
 
-const Anecdote = ({ anecdotes, voteMutation, deleteMutation, dispatch, user }) => {
+const Anecdote = ({ anecdotes, voteMutation, deleteMutation, dispatch, user, queryClient }) => {
   const { id } = useParams()
   const anecdote = anecdotes.find(a => a.id === Number(id))
+  const commentField = useField('text')
+
   if (!anecdote) return <div>Anecdote not found</div>
+
+  const commentMutation = useMutation({
+    mutationFn: (comment) => addComment(anecdote.id, comment),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['anecdotes'] })
+  })
 
   const handleVote = () => {
     voteMutation.mutate(anecdote.id)
@@ -85,6 +94,13 @@ const Anecdote = ({ anecdotes, voteMutation, deleteMutation, dispatch, user }) =
     setTimeout(() => dispatch({ type: 'CLEAR' }), 5000)
   }
 
+  const handleAddComment = (e) => {
+    e.preventDefault()
+    if (!commentField.inputProps.value) return
+    commentMutation.mutate(commentField.inputProps.value)
+    commentField.reset()
+  }
+
   return (
     <div>
       <h2>{anecdote.content}</h2>
@@ -93,9 +109,22 @@ const Anecdote = ({ anecdotes, voteMutation, deleteMutation, dispatch, user }) =
       <div>More info: <a href={anecdote.info}>{anecdote.info}</a></div>
       <button onClick={handleVote}>like</button>
       {user?.username === anecdote.user && <button onClick={handleDelete}>delete</button>}
+
+      <h3>Comments</h3>
+      <form onSubmit={handleAddComment}>
+        <input {...commentField.inputProps} placeholder="Add a comment" />
+        <button type="submit">add comment</button>
+      </form>
+      <ul>
+        {anecdote.comments.length === 0 && <li>No comments yet</li>}
+        {anecdote.comments.map((c, idx) => (
+          <li key={idx}>{c}</li>
+        ))}
+      </ul>
     </div>
   )
 }
+
 
 const Notification = ({ notification }) => {
   if (!notification) return null
