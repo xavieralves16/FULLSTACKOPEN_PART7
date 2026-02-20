@@ -3,12 +3,32 @@ import { useField } from './hooks'
 import { useNotification } from './NotificationContext'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAll, createAnecdote, voteAnecdote, deleteAnecdote } from './services/anecdotes'
+import { useReducer } from 'react'
 
-const Menu = () => (
+// Reducer para o estado do user
+const userReducer = (state, action) => {
+  switch(action.type) {
+    case 'LOGIN':
+      return action.payload
+    case 'LOGOUT':
+      return null
+    default:
+      return state
+  }
+}
+
+const Menu = ({ user, logout }) => (
   <div>
     <Link to="/" style={{ paddingRight: 5 }}>anecdotes</Link>
     <Link to="/create" style={{ paddingRight: 5 }}>create new</Link>
-    <Link to="/about">about</Link>
+    <Link to="/about" style={{ paddingRight: 5 }}>about</Link>
+    {user ? (
+      <span>
+        Logged in as {user.username} <button onClick={logout}>logout</button>
+      </span>
+    ) : (
+      <Link to="/login">login</Link>
+    )}
   </div>
 )
 
@@ -25,18 +45,19 @@ const AnecdoteList = ({ anecdotes }) => (
   </div>
 )
 
-const Anecdote = ({ anecdotes, voteMutation, deleteMutation, dispatch }) => {
+const Anecdote = ({ anecdotes, voteMutation, deleteMutation, dispatch, user }) => {
   const { id } = useParams()
   const anecdote = anecdotes.find(a => a.id === Number(id))
   if (!anecdote) return <div>Anecdote not found</div>
 
   const handleVote = () => {
-    voteMutation.mutate(anecdote.id)  
+    voteMutation.mutate(anecdote.id)
     dispatch({ type: 'SET', payload: `You liked "${anecdote.content}"` })
     setTimeout(() => dispatch({ type: 'CLEAR' }), 5000)
   }
 
   const handleDelete = () => {
+    if (user?.username !== anecdote.user) return
     deleteMutation.mutate(anecdote.id)
     dispatch({ type: 'SET', payload: `"${anecdote.content}" deleted` })
     setTimeout(() => dispatch({ type: 'CLEAR' }), 5000)
@@ -49,7 +70,7 @@ const Anecdote = ({ anecdotes, voteMutation, deleteMutation, dispatch }) => {
       <div>Votes: {anecdote.votes}</div>
       <div>More info: <a href={anecdote.info}>{anecdote.info}</a></div>
       <button onClick={handleVote}>like</button>
-      <button onClick={handleDelete}>delete</button>
+      {user?.username === anecdote.user && <button onClick={handleDelete}>delete</button>}
     </div>
   )
 }
@@ -70,7 +91,7 @@ const About = () => (
 
 const Footer = () => <div>Anecdote app for <a href='https://fullstackopen.com/'>Full Stack Open</a>.</div>
 
-const CreateNew = ({ addNew }) => {
+const CreateNew = ({ addNew, user }) => {
   const navigate = useNavigate()
   const content = useField('text')
   const author = useField('text')
@@ -78,11 +99,14 @@ const CreateNew = ({ addNew }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    if (!user) return alert('You must be logged in to create an anecdote')
+
     addNew({
       content: content.inputProps.value,
       author: author.inputProps.value,
       info: info.inputProps.value,
-      votes: 0
+      votes: 0,
+      user: user.username // associa o user à criação
     })
     navigate('/')
   }
@@ -107,8 +131,30 @@ const CreateNew = ({ addNew }) => {
   )
 }
 
+const Login = ({ login }) => {
+  const navigate = useNavigate()
+  const usernameField = useField('text')
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    login({ username: usernameField.inputProps.value })
+    navigate('/')
+  }
+
+  return (
+    <div>
+      <h2>Login</h2>
+      <form onSubmit={handleSubmit}>
+        <div>username <input {...usernameField.inputProps} /></div>
+        <button type="submit">login</button>
+      </form>
+    </div>
+  )
+}
+
 const App = () => {
   const [notification, dispatch] = useNotification()
+  const [user, userDispatch] = useReducer(userReducer, null)
   const queryClient = useQueryClient()
 
   const { data: anecdotes = [], isLoading } = useQuery({
@@ -116,14 +162,9 @@ const App = () => {
     queryFn: getAll
   })
 
-  // Mutations
   const newAnecdoteMutation = useMutation({
     mutationFn: createAnecdote,
-    onSuccess: (newAnecdote) => {
-      queryClient.invalidateQueries({ queryKey: ['anecdotes'] })
-      dispatch({ type: 'SET', payload: `A new anecdote "${newAnecdote.content}" created!` })
-      setTimeout(() => dispatch({ type: 'CLEAR' }), 5000)
-    }
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['anecdotes'] })
   })
 
   const voteMutation = useMutation({
@@ -137,6 +178,8 @@ const App = () => {
   })
 
   const addNew = (anecdote) => newAnecdoteMutation.mutate(anecdote)
+  const login = (user) => userDispatch({ type: 'LOGIN', payload: user })
+  const logout = () => userDispatch({ type: 'LOGOUT' })
 
   if (isLoading) return <div>Loading anecdotes...</div>
 
@@ -144,11 +187,12 @@ const App = () => {
     <Router>
       <div>
         <h1>Software anecdotes</h1>
-        <Menu />
+        <Menu user={user} logout={logout} />
         <Notification notification={notification} />
         <Routes>
           <Route path="/" element={<AnecdoteList anecdotes={anecdotes} />} />
-          <Route path="/create" element={<CreateNew addNew={addNew} />} />
+          <Route path="/create" element={<CreateNew addNew={addNew} user={user} />} />
+          <Route path="/about" element={<About />} />
           <Route
             path="/anecdotes/:id"
             element={
@@ -157,10 +201,11 @@ const App = () => {
                 voteMutation={voteMutation}
                 deleteMutation={deleteMutation}
                 dispatch={dispatch}
+                user={user}
               />
             }
           />
-          <Route path="/about" element={<About />} />
+          <Route path="/login" element={<Login login={login} />} />
         </Routes>
         <Footer />
       </div>
